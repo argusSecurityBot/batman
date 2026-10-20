@@ -59,13 +59,17 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
 */
     const int nthreads;
     const double c1, c2, p;
+    PyObject *ds_obj;
     PyArrayObject *ds, *flux;
     npy_intp dims[1];
 
-    if(!PyArg_ParseTuple(args,"Odddi", &ds, &p, &c1, &c2, &nthreads)) return NULL;
+    if(!PyArg_ParseTuple(args,"Odddi", &ds_obj, &p, &c1, &c2, &nthreads)) return NULL;
 
-    dims[0] = PyArray_DIMS(ds)[0];
-    flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));    //creates numpy array to store return flux values
+    ds = (PyArrayObject *) PyArray_FROM_OTF(ds_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+    if(ds == NULL) return NULL;
+
+    dims[0] = PyArray_SIZE(ds);
+    flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_DOUBLE);    //creates numpy array to store return flux values
 
     double *f_array = PyArray_DATA(flux);
     double *d_array = PyArray_DATA(ds);
@@ -239,6 +243,7 @@ static PyObject *_quadratic_ld(PyObject *self, PyObject *args)
         f_array[i] = 1.0 - ((1.0 - c1 - 2.0*c2)*lambdae + (c1 + 2.0*c2)*lambdad + c2*etad)/omega;
     }
 
+    Py_DECREF(ds);
     return PyArray_Return((PyArrayObject *)flux);
 }
 

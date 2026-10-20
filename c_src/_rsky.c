@@ -78,12 +78,16 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 	double ecc, inc, a, omega, per, tc, BIGD = 100.;
 	int transittype, nthreads;;
 	npy_intp dims[1];
+	PyObject *ts_obj;
 	PyArrayObject *ts, *ds;
 
-  	if(!PyArg_ParseTuple(args,"Oddddddii", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype, &nthreads)) return NULL;
+  	if(!PyArg_ParseTuple(args,"Oddddddii", &ts_obj, &tc, &per, &a, &inc, &ecc, &omega, &transittype, &nthreads)) return NULL;
 
-	dims[0] = PyArray_DIMS(ts)[0];
-	ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
+	ts = (PyArrayObject *) PyArray_FROM_OTF(ts_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+	if(ts == NULL) return NULL;
+
+	dims[0] = PyArray_SIZE(ts);
+	ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_DOUBLE);
 
 	double *t_array = PyArray_DATA(ts);
 	double *output_array = PyArray_DATA(ds);
@@ -147,6 +151,7 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 		}
 
 	}
+	Py_DECREF(ts);
 	return PyArray_Return((PyArrayObject *)ds);
 }
 

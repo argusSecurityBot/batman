@@ -38,13 +38,17 @@ static PyObject *_eclipse(PyObject *self, PyObject *args)
 	int nthreads;
 	double p, fp;
 
+	PyObject *ds_obj;
 	PyArrayObject *ds, *flux;
 	npy_intp dims[1];
 	
-  	if(!PyArg_ParseTuple(args, "Oddi", &ds, &p, &fp, &nthreads)) return NULL;		//parses function input
+  	if(!PyArg_ParseTuple(args, "Oddi", &ds_obj, &p, &fp, &nthreads)) return NULL;		//parses function input
 
-	dims[0] = PyArray_DIMS(ds)[0]; 
-	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ds));	//creates numpy array to store return flux values
+	ds = (PyArrayObject *) PyArray_FROM_OTF(ds_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+	if(ds == NULL) return NULL;
+
+	dims[0] = PyArray_SIZE(ds); 
+	flux = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_DOUBLE);	//creates numpy array to store return flux values
 	
 	double *f_array = PyArray_DATA(flux);
 	double *d_array = PyArray_DATA(ds);
@@ -82,6 +86,7 @@ static PyObject *_eclipse(PyObject *self, PyObject *args)
 			f_array[i] = 1. + fp*(1. - alpha_o);			//planet partially occulted
 		}
 	}
+	Py_DECREF(ds);
 	return PyArray_Return((PyArrayObject *)flux);
 }
 
